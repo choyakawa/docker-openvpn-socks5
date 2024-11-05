@@ -3,7 +3,7 @@ WORKDIR /go/src/socks5
 COPY server.go .
 RUN go get && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-s' -o ./socks5
 
-FROM curve25519xsalsa20poly1305/openvpn-tunnel:latest
+FROM choyakawa/openvpn-tunnel:latest
 
 COPY socks5-entrypoint.sh /usr/local/bin/
 COPY --from=builder /go/src/socks5/socks5 /usr/local/bin
