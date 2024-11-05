@@ -1,7 +1,7 @@
 FROM golang:latest as builder
 WORKDIR /go/src/socks5
 COPY server.go .
-RUN go mod init && go mod tidy && CGO_ENABLED=0 GOOS=linux go build -buildvcs=false -a -installsuffix cgo -ldflags '-s' -o ./socks5
+RUN go mod init && go mod tidy && CGO_ENABLED=1 GOOS=linux go build -buildvcs=false -a -installsuffix cgo -ldflags '-s' -o ./socks5
 
 FROM choyakawa/openvpn-tunnel:latest
 
