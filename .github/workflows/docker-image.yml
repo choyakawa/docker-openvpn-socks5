@@ -14,7 +14,7 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    name: Build Docker Image (Alpine)
+    name: Build Docker Image
     steps:
       -
         name: Checkout
@@ -44,4 +44,5 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          tags: ${{ github.event.inputs.docker_username }}/openvpn:latest
 
