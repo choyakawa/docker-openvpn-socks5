@@ -1,63 +1,50 @@
 package main
 
 import (
-	"log"
-	"net"
-	"os"
-	"os/exec"
+    "log"
+    "os"
+    "os/exec"
 
-	"github.com/armon/go-socks5"
-	"github.com/caarlos0/env"
+    "github.com/caarlos0/env"
+    "github.com/txthinking/socks5"
 )
 
 type params struct {
-	User     string `env:"SOCKS5_USER" envDefault:""`
-	Password string `env:"SOCKS5_PASS" envDefault:""`
-	Port     string `env:"SOCKS5_PORT" envDefault:"1080"`
-	Up       string `env:"SOCKS5_UP"   envDefault:""`
+    User     string `env:"SOCKS5_USER" envDefault:""`
+    Password string `env:"SOCKS5_PASS" envDefault:""`
+    Port     string `env:"SOCKS5_PORT" envDefault:"1080"`
+    Up       string `env:"SOCKS5_UP"   envDefault:""`
 }
 
 func main() {
-	// Working with app params
-	cfg := params{}
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Printf("%+v\n", err)
-	}
+    cfg := params{}
+    err := env.Parse(&cfg)
+    if err != nil {
+        log.Printf("%+v\n", err)
+    }
 
-	//Initialize socks5 config
-	socsk5conf := &socks5.Config{
-		Logger: log.New(os.Stdout, "", log.LstdFlags),
-	}
+    address := ":" + cfg.Port
 
-	if cfg.User+cfg.Password != "" {
-		creds := socks5.StaticCredentials{
-			cfg.User: cfg.Password,
-		}
-		cator := socks5.UserPassAuthenticator{Credentials: creds}
-		socsk5conf.AuthMethods = []socks5.Authenticator{cator}
-	}
+    var server *socks5.Server
+    if cfg.User != "" && cfg.Password != "" {
+        server, err = socks5.NewClassicServer(address, cfg.User, cfg.Password, 0)
+    } else {
+        server, err = socks5.NewClassicServer(address, "", "", 0)
+    }
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	server, err := socks5.New(socsk5conf)
-	if err != nil {
-		log.Fatal(err)
-	}
+    log.Printf("Start listening proxy service on port %s\n", cfg.Port)
 
-	l, err := net.Listen("tcp", ":"+cfg.Port)
-	if err != nil {
-		log.Fatal(err)
-	}
+    if cfg.Up != "" {
+        err = exec.Command(cfg.Up).Start()
+        if err != nil {
+            log.Fatal(err)
+        }
+    }
 
-	log.Printf("Start listening proxy service on port %s\n", cfg.Port)
-
-	if cfg.Up != "" {
-		err = exec.Command(cfg.Up).Start()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if err := server.Serve(l); err != nil {
-		log.Fatal(err)
-	}
+    if err := server.ListenAndServe(); err != nil {
+        log.Fatal(err)
+    }
 }
